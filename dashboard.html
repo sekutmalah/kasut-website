@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Kasut Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a; --surface: #141414; --surface2: #1e1e1e; --border: #2a2a2a;
+    --accent: #ff3c3c; --green: #00e676; --blue: #2979ff; --purple: #9c27b0;
+    --yellow: #ffc107; --orange: #ff7043; --text: #f0f0f0; --muted: #666; --card: #181818;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  /* LOGIN */
+  #loginScreen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); background-image: repeating-linear-gradient(0deg, transparent, transparent 40px, #ffffff04 40px, #ffffff04 41px), repeating-linear-gradient(90deg, transparent, transparent 40px, #ffffff04 40px, #ffffff04 41px); }
+  .login-box { width: 100%; max-width: 400px; padding: 48px 40px; background: var(--surface); border: 1px solid var(--border); position: relative; }
+  .login-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--yellow)); }
+  .login-logo { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 4px; color: var(--accent); margin-bottom: 4px; }
+  .login-sub { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 6px; }
+  .field input { width: 100%; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; }
+  .field input:focus { border-color: var(--accent); }
+  .btn-login { width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px; cursor: pointer; }
+  .login-err { color: var(--accent); font-size: 13px; margin-top: 10px; display: none; }
+
+  /* APP */
+  #app { display: none; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 100; }
+  .header-logo { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px; color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .user-badge { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .btn-sm { background: none; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; font-size: 12px; cursor: pointer; }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* NAV */
+  .nav-tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; overflow-x: auto; }
+  .nav-tab { padding: 12px 18px; background: none; border: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; transition: all 0.2s; }
+  .nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  /* MAIN */
+  .main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+
+  /* STAT CARDS */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); padding: 16px; border-left: 3px solid var(--muted); }
+  .stat-card.blue { border-left-color: var(--blue); }
+  .stat-card.green { border-left-color: var(--green); }
+  .stat-card.yellow { border-left-color: var(--yellow); }
+  .stat-card.purple { border-left-color: var(--purple); }
+  .stat-card.orange { border-left-color: var(--orange); }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; line-height: 1; }
+  .stat-card.blue .stat-value { color: var(--blue); }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.yellow .stat-value { color: var(--yellow); }
+  .stat-card.purple .stat-value { color: var(--purple); }
+  .stat-card.orange .stat-value { color: var(--orange); }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* BUTTONS */
+  .btn { padding: 9px 18px; border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-green { background: var(--green); color: #000; }
+  .btn-yellow { background: var(--yellow); color: #000; }
+  .btn-outline { background: none; border: 1px solid var(--border); color: var(--muted); }
+  .btn-outline:hover { border-color: var(--text); color: var(--text); }
+
+  /* FILTER BAR */
+  .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  .filter-select { padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; cursor: pointer; }
+  .search-input { padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; min-width: 200px; }
+  .search-input:focus, .filter-select:focus { border-color: var(--accent); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 10px 14px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:hover td { background: var(--surface); }
+  .td-mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+  .td-id { color: var(--yellow); font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700; }
+  .td-amount { color: var(--green); font-family: 'DM Mono', monospace; font-weight: 600; }
+  .td-muted { color: var(--muted); font-size: 12px; }
+  .td-ref { color: var(--yellow); font-family: 'DM Mono', monospace; font-size: 11px; }
+  .badge { font-size: 10px; padding: 3px 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; white-space: nowrap; }
+  .badge-pending { background: #ffc10720; color: var(--yellow); }
+  .badge-confirmed { background: #00e67620; color: var(--green); }
+  .badge-shipped { background: #2979ff20; color: var(--blue); }
+  .badge-delivered { background: #9c27b020; color: var(--purple); }
+  .badge-cancelled { background: #ff3c3c20; color: var(--accent); }
+
+  /* DIRECT ORDERS TAB */
+  .paste-section { background: var(--card); border: 1px solid var(--border); padding: 16px; margin-bottom: 20px; }
+  .paste-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+  .paste-hint { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.6; }
+  .paste-cols { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 8px; }
+  .paste-col-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 4px 8px; background: var(--surface); text-align: center; }
+  .paste-area { width: 100%; min-height: 120px; padding: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; outline: none; resize: vertical; }
+  .paste-area:focus { border-color: var(--accent); }
+  .paste-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  .week-reset-info { font-size: 11px; color: var(--muted); }
+
+  /* AI CONVERT SECTION */
+  .ai-section { background: var(--surface2); border: 1px solid #9c27b030; padding: 14px; margin-top: 12px; }
+  .ai-title { font-size: 12px; font-weight: 600; color: var(--purple); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .ai-row { display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .ai-row:last-child { border-bottom: none; }
+  .ai-remark { flex: 1; min-width: 150px; font-size: 12px; color: var(--muted); font-style: italic; }
+  .ai-suggest { flex: 1; min-width: 150px; }
+  .ai-suggest input { width: 100%; padding: 6px 10px; background: var(--bg); border: 1px solid #9c27b050; color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; outline: none; }
+  .ai-suggest input:focus { border-color: var(--purple); }
+  .ai-status { font-size: 10px; padding: 2px 8px; }
+  .ai-status.loading { color: var(--yellow); }
+  .ai-status.done { color: var(--green); }
+  .ai-status.error { color: var(--accent); }
+  .btn-ai-confirm { padding: 5px 12px; background: var(--purple); color: #fff; border: none; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+
+  /* PARSED ORDERS TABLE */
+  .parsed-section { background: var(--card); border: 1px solid var(--border); padding: 16px; margin-bottom: 16px; }
+  .parsed-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .parsed-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .parsed-table th { padding: 8px 10px; background: var(--surface); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .parsed-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .parsed-table input { width: 100%; padding: 4px 8px; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 11px; outline: none; }
+  .parsed-table input:focus { border-color: var(--accent); }
+
+  /* TRACKING SECTION */
+  .tracking-section { background: var(--card); border: 1px solid var(--border); padding: 16px; margin-bottom: 20px; }
+  .tracking-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .tracking-paste { width: 100%; min-height: 100px; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; outline: none; resize: vertical; }
+  .tracking-paste:focus { border-color: var(--green); }
+  .tracking-hint { font-size: 11px; color: var(--muted); margin-bottom: 8px; line-height: 1.6; }
+
+  /* REFERRAL */
+  .ref-card { background: var(--card); border: 1px solid var(--border); padding: 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; border-left: 3px solid var(--yellow); }
+  .ref-code { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; color: var(--yellow); min-width: 160px; }
+  .ref-stats { display: flex; gap: 20px; flex: 1; flex-wrap: wrap; }
+  .ref-stat { text-align: center; }
+  .ref-stat-val { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 700; }
+  .ref-stat-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .ref-komisyen { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--green); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading { display: flex; align-items: center; justify-content: center; padding: 40px; gap: 10px; color: var(--muted); }
+
+  .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; background: var(--surface); border: 1px solid var(--border); font-size: 13px; z-index: 999; transform: translateY(80px); opacity: 0; transition: all 0.3s; pointer-events: none; max-width: 320px; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.green { border-color: var(--green); color: var(--green); }
+  .toast.red { border-color: var(--accent); color: var(--accent); }
+  .toast.blue { border-color: var(--blue); color: var(--blue); }
+
+  /* SECTION DIVIDER */
+  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: var(--muted); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+  @media (max-width: 768px) { .main { padding: 12px; } .paste-cols { grid-template-columns: repeat(3,1fr); } }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">DASHBOARD</div>
+    <div class="login-sub">Admin & Admin Bos sahaja</div>
+    <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="admin@email.com" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn-login" onclick="doLogin()">LOG IN</button>
+    <div class="login-err" id="loginErr">Email atau password salah / tiada akses.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="header-logo">📊 KASUT DASHBOARD</div>
+    <div class="header-right">
+      <span class="user-badge" id="userBadge"></span>
+      <button class="btn-sm" onclick="doLogout()">Keluar</button>
+    </div>
+  </header>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('overview',this)">📊 Overview</button>
+    <button class="nav-tab" onclick="switchTab('direct',this)">📋 Direct Orders</button>
+    <button class="nav-tab" onclick="switchTab('sublive',this)">⚡ Sub Live Orders</button>
+    <button class="nav-tab" onclick="switchTab('borong',this)">📦 Borong Orders</button>
+    <button class="nav-tab" onclick="switchTab('tracking',this)">🚚 Tracking</button>
+    <button class="nav-tab" onclick="switchTab('referral',this)">💰 Referral</button>
+    <button class="nav-tab" onclick="switchTab('settings',this)">⚙️ Settings</button>
+  </div>
+
+  <div class="main">
+
+    <!-- OVERVIEW -->
+    <div id="tab-overview">
+      <div class="stat-grid" id="statGrid">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- DIRECT ORDERS -->
+    <div id="tab-direct" style="display:none">
+      <div class="paste-section">
+        <div class="paste-title">📋 Paste dari Google Sheets "Ready to Ship"</div>
+        <div class="paste-hint">
+          Copy dari Google Sheets kau (select semua row yang ready) → Ctrl+C → Paste dalam kotak bawah ni.<br>
+          Format: <span style="color:var(--yellow);font-family:monospace">Nama | No. Phone | Alamat | Poskod | Remark Item</span>
+        </div>
+        <div class="paste-cols">
+          <div class="paste-col-label">Nama</div>
+          <div class="paste-col-label">No. Phone</div>
+          <div class="paste-col-label">Alamat</div>
+          <div class="paste-col-label">Poskod</div>
+          <div class="paste-col-label">Remark Item</div>
+          <div class="paste-col-label">—</div>
+        </div>
+        <textarea class="paste-area" id="pasteArea" placeholder="Paste data dari Google Sheets di sini...&#10;&#10;Contoh:&#10;Ali Bin Abu	0111234567	No 12 Jalan Maju	40000	adizero hitam merah 44&#10;Siti Binti Ahmad	0129876543	Blok B-2-3 Taman Damai	50000	nike airmax putih 39 dan 40"></textarea>
+        <div class="paste-actions">
+          <button class="btn btn-primary" onclick="parsePaste()">🔍 Parse & AI Convert</button>
+          <button class="btn btn-outline" onclick="clearPaste()">✕ Clear</button>
+          <span class="week-reset-info">Order ID reset setiap Isnin • Format: DIR-[4digit phone]-[running no]</span>
+        </div>
+      </div>
+
+      <!-- AI CONVERT SECTION -->
+      <div class="ai-section" id="aiSection" style="display:none">
+        <div class="ai-title">🤖 AI Convert Remark → Kod Kasut <span class="spinner" id="aiSpinner" style="display:none"></span></div>
+        <div id="aiRows"></div>
+        <div style="margin-top:12px;display:flex;gap:10px">
+          <button class="btn btn-primary" onclick="confirmAllAI()">✅ Confirm Semua & Generate Orders</button>
+        </div>
+      </div>
+
+      <!-- PARSED ORDERS -->
+      <div class="parsed-section" id="parsedSection" style="display:none">
+        <div class="parsed-title">
+          <span>📦 Order Sedia untuk Export — <span id="parsedCount">0</span> order</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-green" onclick="exportDirectCSV()">⬇️ Export CSV (SPX)</button>
+            <button class="btn btn-blue" onclick="saveDirectOrders()">💾 Simpan ke Database</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="parsed-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Nama</th>
+                <th>Phone</th>
+                <th>Alamat</th>
+                <th>Poskod</th>
+                <th>Item (Kod)</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="parsedTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SAVED DIRECT ORDERS -->
+      <div class="section-title">DIRECT ORDERS — HISTORY</div>
+      <div class="filter-bar">
+        <select class="filter-select" id="directStatusFilter" onchange="renderDirectOrders()">
+          <option value="">Semua Status</option>
+          <option value="pending">Pending</option>
+          <option value="shipped">Shipped</option>
+          <option value="delivered">Delivered</option>
+        </select>
+        <input class="search-input" type="text" id="directSearch" placeholder="Cari nama / Order ID..." oninput="renderDirectOrders()">
+        <button class="btn btn-green" onclick="exportAllDirectCSV()">⬇️ Export Semua CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order ID</th><th>Tarikh</th><th>Nama</th><th>Phone</th><th>Item</th><th>Tracking</th><th>Status</th></tr></thead>
+          <tbody id="directTable"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SUBLIVE ORDERS -->
+    <div id="tab-sublive" style="display:none">
+      <div class="filter-bar">
+        <select class="filter-select" id="subliveHostFilter" onchange="renderSubliveOrders()"><option value="">Semua Host</option></select>
+        <select class="filter-select" id="subliveStatusFilter" onchange="renderSubliveOrders()">
+          <option value="">Semua Status</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="shipped">Shipped</option>
+          <option value="delivered">Delivered</option>
+        </select>
+        <input class="search-input" type="text" id="subliveSearch" placeholder="Cari nama / Order ID..." oninput="renderSubliveOrders()">
+        <button class="btn btn-green" onclick="exportSubliveCSV()">⬇️ Export CSV (SPX)</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order ID</th><th>Tarikh</th><th>Customer</th><th>Item</th><th>Jumlah</th><th>Host</th><th>Tracking</th><th>Status</th></tr></thead>
+          <tbody id="subliveTable"><tr><td colspan="8"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BORONG ORDERS -->
+    <div id="tab-borong" style="display:none">
+      <div class="filter-bar">
+        <select class="filter-select" id="borongStatusFilter" onchange="renderBorongOrders()">
+          <option value="">Semua Status</option>
+          <option value="pending_deposit">Pending Deposit</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="shipped">Shipped</option>
+        </select>
+        <select class="filter-select" id="borongRefFilter" onchange="renderBorongOrders()"><option value="">Semua Referral</option></select>
+        <input class="search-input" type="text" id="borongSearch" placeholder="Cari nama customer..." oninput="renderBorongOrders()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tarikh</th><th>Customer</th><th>Item</th><th>Jumlah</th><th>Deposit</th><th>Referral</th><th>Alamat</th><th>Status</th></tr></thead>
+          <tbody id="borongTable"><tr><td colspan="8"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TRACKING -->
+    <div id="tab-tracking" style="display:none">
+      <div class="tracking-section">
+        <div class="tracking-title">🚚 Import Tracking dari Excel SPX</div>
+        <div class="tracking-hint">
+          Upload fail Excel (.xlsx) yang kau dapat dari SPX selepas generate tracking.<br>
+          Sistem akan auto-extract tracking number, link SPX, phone & poskod customer.<br>
+          <span style="color:var(--yellow)">⚠️ Pastikan fail Excel tu adalah export dari SPX (ada column "Tracking No." dan "Tracking No. link")</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px">
+          <input type="file" id="spxExcelFile" accept=".xlsx,.xls" style="display:none" onchange="importSPXExcel()">
+          <button class="btn btn-green" onclick="document.getElementById('spxExcelFile').click()">📂 Upload Excel SPX</button>
+          <span id="importStatus" style="font-size:13px;color:var(--muted)">Belum ada fail dipilih</span>
+        </div>
+
+        <!-- IMPORT PREVIEW -->
+        <div id="importPreview" style="display:none;margin-top:16px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--green)">✅ <span id="importCount">0</span> tracking berjaya diimport dari SPX</div>
+          <div class="table-wrap" style="max-height:300px;overflow-y:auto">
+            <table style="font-size:12px">
+              <thead><tr><th>Tracking No.</th><th>Nama</th><th>Phone</th><th>Poskod</th><th>Status SPX</th><th>Match Order</th></tr></thead>
+              <tbody id="importPreviewTable"></tbody>
+            </table>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:10px">
+            <button class="btn btn-blue" onclick="saveImportedTracking()">💾 Simpan ke Database</button>
+            <button class="btn btn-outline" onclick="cancelImport()">✕ Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">SEMUA ORDER DENGAN TRACKING</div>
+      <div class="filter-bar">
+        <input class="search-input" type="text" id="trackingSearch" placeholder="Cari Order ID, nama atau tracking..." oninput="renderTrackingOrders()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order ID</th><th>Nama</th><th>Phone</th><th>Item</th><th>Tracking Number</th><th>Link SPX</th><th>Status</th></tr></thead>
+          <tbody id="trackingTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REFERRAL -->
+    <div id="tab-referral" style="display:none">
+      <div style="margin-bottom:16px;font-size:13px;color:var(--muted)">
+        Komisyen: <span style="color:var(--yellow);font-weight:600">RM100</span> per referral • Dikira berdasarkan order borong confirmed.
+      </div>
+      <div id="referralList"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="tab-settings" style="display:none">
+      <div style="max-width:500px">
+        <div class="section-title">⚙️ SETTINGS</div>
+        <div style="background:var(--card);border:1px solid var(--border);padding:20px;margin-bottom:16px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)">Claude API Key</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">API key untuk AI convert remark. Disimpan dalam browser kau sahaja — tidak disimpan dalam kod atau database.</div>
+          <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;margin-bottom:10px">
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" onclick="saveApiKey()">💾 Simpan API Key</button>
+            <button class="btn btn-outline" onclick="clearApiKey()">✕ Padam</button>
+          </div>
+          <div id="apiKeyStatus" style="margin-top:10px;font-size:12px"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getDatabase, ref, onValue, update, push, get, set } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCa-5_X-z0RMT_Oxz78gTvLWY9Z9_id6Zw",
+  authDomain: "kasut-stock.firebaseapp.com",
+  databaseURL: "https://kasut-stock-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "kasut-stock",
+  storageBucket: "kasut-stock.firebasestorage.app",
+  messagingSenderId: "638253856204",
+  appId: "1:638253856204:web:f71aace581261ecaf15969"
+};
+
+const CLAUDE_API_KEY = localStorage.getItem('claude_api_key') || '';
+const KOMISYEN = 100;
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+let borongOrders = {}, subliveOrders = {}, directOrders = {}, products = {};
+let currentUser = null;
+let parsedOrders = [];
+let aiResults = {};
+
+// ─── WEEK COUNTER ────────────────────────────────────────
+function getWeekNumber() {
+  var d = new Date();
+  var startOfYear = new Date(d.getFullYear(), 0, 1);
+  return Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+}
+
+function getRunningNumber(type) {
+  var key = 'order_counter_'+type+'_week'+getWeekNumber()+'_'+new Date().getFullYear();
+  var current = parseInt(localStorage.getItem(key) || '0') + 1;
+  localStorage.setItem(key, current);
+  return String(current).padStart(3, '0');
+}
+
+function generateOrderId(type, phone) {
+  var last4 = String(phone).replace(/\D/g,'').slice(-4);
+  var num = getRunningNumber(type);
+  return type+'-'+last4+'-'+num;
+}
+
+// ─── AUTH ────────────────────────────────────────────────
+window.doLogin = async function() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var pass = document.getElementById('loginPass').value;
+  document.getElementById('loginErr').style.display = 'none';
+  try { await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e) { document.getElementById('loginErr').style.display = 'block'; }
+};
+window.doLogout = function() { signOut(auth); };
+document.getElementById('loginPass').addEventListener('keydown', function(e){ if(e.key==='Enter') window.doLogin(); });
+
+onAuthStateChanged(auth, async function(user) {
+  if (user) {
+    var snap = await get(ref(db, 'users/'+user.uid));
+    var ud = snap.val();
+    if (!ud || ud.role !== 'admin') {
+      document.getElementById('loginErr').style.display = 'block';
+      document.getElementById('loginErr').textContent = 'Tiada akses dashboard. Admin sahaja.';
+      signOut(auth); return;
+    }
+    currentUser = user;
+    document.getElementById('userBadge').textContent = user.email+' [ADMIN]';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    onValue(ref(db,'orders'), function(s){ borongOrders=s.val()||{}; renderOverview(); renderBorongOrders(); updateBorongFilters(); });
+    onValue(ref(db,'sublive_orders'), function(s){ subliveOrders=s.val()||{}; renderOverview(); renderSubliveOrders(); updateSubliveFilters(); renderTrackingOrders(); });
+    onValue(ref(db,'direct_orders'), function(s){ directOrders=s.val()||{}; renderOverview(); renderDirectOrders(); renderTrackingOrders(); });
+    onValue(ref(db,'products'), function(s){ products=s.val()||{}; });
+  } else {
+    currentUser = null;
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+// ─── TABS ────────────────────────────────────────────────
+window.switchTab = function(tab, btn) {
+  document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
+  btn.classList.add('active');
+  ['overview','direct','sublive','borong','tracking','referral','settings'].forEach(function(t){
+    document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
+  });
+  if(tab==='referral') renderReferral();
+  if(tab==='settings') loadApiKeyStatus();
+};
+
+window.saveApiKey = function() {
+  var key = document.getElementById('apiKeyInput').value.trim();
+  if(!key){ showToast('Masukkan API key dulu!','red'); return; }
+  localStorage.setItem('claude_api_key', key);
+  document.getElementById('apiKeyStatus').innerHTML = '<span style="color:var(--green)">✅ API key disimpan dalam browser!</span>';
+  showToast('✅ API key disimpan!','green');
+};
+
+window.clearApiKey = function() {
+  localStorage.removeItem('claude_api_key');
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('apiKeyStatus').innerHTML = '<span style="color:var(--muted)">API key dipadam.</span>';
+};
+
+function loadApiKeyStatus() {
+  var key = localStorage.getItem('claude_api_key');
+  var statusEl = document.getElementById('apiKeyStatus');
+  if(key) {
+    document.getElementById('apiKeyInput').value = key;
+    statusEl.innerHTML = '<span style="color:var(--green)">✅ API key dah ada dalam browser.</span>';
+  } else {
+    statusEl.innerHTML = '<span style="color:var(--yellow)">⚠️ Belum ada API key. AI convert tak boleh guna.</span>';
+  }
+}
+
+// ─── OVERVIEW ────────────────────────────────────────────
+function renderOverview() {
+  var bVals=Object.values(borongOrders), sVals=Object.values(subliveOrders), dVals=Object.values(directOrders);
+  var totalDirect=dVals.length, totalSublive=sVals.length, totalBorong=bVals.length;
+  var pendingTracking=dVals.filter(function(o){return !o.trackingNo;}).length + sVals.filter(function(o){return !o.trackingNo;}).length;
+  var pendingDeposit=bVals.filter(function(o){return o.status==='pending_deposit';}).length;
+  var totalRevenue=sVals.reduce(function(a,b){return a+(b.total||0);},0)+dVals.reduce(function(a,b){return a+(b.total||0);},0);
+
+  document.getElementById('statGrid').innerHTML =
+    stat('📋 Direct Orders', totalDirect, 'order terus', 'blue')+
+    stat('⚡ Sub Live Orders', totalSublive, 'order sublive', 'purple')+
+    stat('📦 Borong Orders', totalBorong, 'order borong', 'orange')+
+    stat('🚚 Pending Tracking', pendingTracking, 'belum ada tracking', 'yellow')+
+    stat('⏳ Pending Deposit', pendingDeposit, 'borong belum bayar', 'yellow')+
+    stat('💰 Jumlah Revenue', 'RM'+totalRevenue.toFixed(0), 'direct + sublive', 'green');
+}
+function stat(label,val,sub,color){ return '<div class="stat-card '+color+'"><div class="stat-label">'+label+'</div><div class="stat-value">'+val+'</div><div class="stat-sub">'+sub+'</div></div>'; }
+
+// ─── PASTE & PARSE ───────────────────────────────────────
+window.parsePaste = async function() {
+  var raw = document.getElementById('pasteArea').value.trim();
+  if(!raw){ showToast('Paste data dulu!','red'); return; }
+
+  var lines = raw.split('\n').filter(function(l){return l.trim();});
+  parsedOrders = [];
+  var remarks = [];
+
+  lines.forEach(function(line, idx) {
+    var cols = line.split('\t');
+    if(cols.length < 4) return;
+    var name = (cols[0]||'').trim();
+    var phone = (cols[1]||'').trim();
+    var address = (cols[2]||'').trim();
+    var postcode = (cols[3]||'').trim();
+    var remark = (cols[4]||'').trim();
+    var orderId = generateOrderId('DIR', phone);
+    parsedOrders.push({ orderId, name, phone, address, postcode, remark, itemCode: '', idx });
+    if(remark) remarks.push({ idx, remark });
+  });
+
+  renderParsedTable();
+
+  // AI Convert
+  if(remarks.length > 0) {
+    document.getElementById('aiSection').style.display = 'block';
+    document.getElementById('aiSpinner').style.display = 'inline-block';
+    renderAIRows(remarks, 'loading');
+    await convertRemarksAI(remarks);
+    document.getElementById('aiSpinner').style.display = 'none';
+  }
+};
+
+async function convertRemarksAI(remarks) {
+  var productList = Object.values(products).length > 0
+    ? Object.values(products).map(function(p){
+        return p.code+': '+p.name+(p.color?' ('+p.color+')':'');
+      }).join('\n')
+    : 'Tiada produk dalam database lagi. Guna format kod: [Brand 2 huruf]-[Model 2 huruf]-[Warna 3 huruf] EU[Saiz]';
+
+  var prompt = `Kau adalah pembantu untuk kedai kasut online Malaysia. Tugas kau adalah convert remark customer kepada kod kasut yang betul.
+
+Senarai produk yang ada:
+${productList}
+
+Format kod: [Brand 2 huruf]-[Model 2 huruf]-[Warna 3 huruf] + Saiz EU
+Contoh: AD-AZ-BKS EU44
+
+Remark customer yang perlu diconvert (format: nombor|remark):
+${remarks.map(function(r){return r.idx+'|'+r.remark;}).join('\n')}
+
+Jawab dalam format JSON sahaja (tiada teks lain):
+{"results": [{"idx": 0, "code": "AD-AZ-BKS EU44", "confidence": "high/medium/low", "note": "sebab"}]}
+
+Kalau tak pasti, letak confidence "low" dan nyatakan dalam note. Kalau ada multiple item dalam satu remark, pisahkan dengan koma dalam code field.`;
+
+  try {
+    var apiKey = localStorage.getItem('claude_api_key') || '';
+    if(!apiKey){ renderAIRows(remarks,'error'); showToast('API key belum set! Pergi tab Settings.','red'); return; }
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    var data = await response.json();
+    var text = data.content[0].text;
+    var clean = text.replace(/```json|```/g,'').trim();
+    var parsed = JSON.parse(clean);
+
+    parsed.results.forEach(function(r) {
+      aiResults[r.idx] = r;
+      if(parsedOrders[r.idx]) parsedOrders[r.idx].itemCode = r.code;
+    });
+    renderAIRows(remarks, 'done');
+    renderParsedTable();
+  } catch(e) {
+    renderAIRows(remarks, 'error');
+    showToast('AI error: '+e.message, 'red');
+  }
+}
+
+function renderAIRows(remarks, status) {
+  var html = remarks.map(function(r) {
+    var result = aiResults[r.idx];
+    var statusEl = status==='loading' ?
+      '<span class="ai-status loading">⏳ Converting...</span>' :
+      status==='error' ? '<span class="ai-status error">❌ Error</span>' :
+      result ? '<span class="ai-status done">✅ '+(result.confidence==='high'?'Yakin':'Tidak pasti')+'</span>' : '';
+    var inputVal = result ? result.code : '';
+    var noteEl = result && result.note ? '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+result.note+'</div>' : '';
+    return '<div class="ai-row">'+
+      '<div class="ai-remark">'+r.remark+'</div>'+
+      '<div class="ai-suggest">'+
+      '<input type="text" id="ai_input_'+r.idx+'" value="'+inputVal+'" placeholder="Kod kasut..." onchange="updateAIResult('+r.idx+',this.value)">'+
+      noteEl+
+      '</div>'+
+      statusEl+
+      '</div>';
+  }).join('');
+  document.getElementById('aiRows').innerHTML = html;
+}
+
+window.updateAIResult = function(idx, val) {
+  if(parsedOrders[idx]) parsedOrders[idx].itemCode = val;
+};
+
+window.confirmAllAI = function() {
+  // Update parsed orders with final AI values
+  parsedOrders.forEach(function(order) {
+    var input = document.getElementById('ai_input_'+order.idx);
+    if(input) order.itemCode = input.value;
+  });
+  renderParsedTable();
+  document.getElementById('aiSection').style.display = 'none';
+  showToast('✅ Semua kod dikonfirm!', 'green');
+};
+
+function renderParsedTable() {
+  if(!parsedOrders.length) return;
+  document.getElementById('parsedSection').style.display = 'block';
+  document.getElementById('parsedCount').textContent = parsedOrders.length;
+
+  var html = parsedOrders.map(function(o, i) {
+    return '<tr>'+
+      '<td class="td-id">'+o.orderId+'</td>'+
+      '<td>'+o.name+'</td>'+
+      '<td class="td-mono">'+o.phone+'</td>'+
+      '<td style="max-width:200px;font-size:11px">'+o.address+'</td>'+
+      '<td class="td-mono">'+o.postcode+'</td>'+
+      '<td><input type="text" value="'+o.itemCode+'" placeholder="Kod kasut..." onchange="parsedOrders['+i+'].itemCode=this.value" style="width:160px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:monospace;font-size:11px;outline:none"></td>'+
+      '<td><button onclick="removeParsedOrder('+i+')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">×</button></td>'+
+      '</tr>';
+  }).join('');
+  document.getElementById('parsedTable').innerHTML = html;
+}
+
+window.removeParsedOrder = function(idx) {
+  parsedOrders.splice(idx, 1);
+  renderParsedTable();
+};
+
+window.clearPaste = function() {
+  document.getElementById('pasteArea').value = '';
+  parsedOrders = [];
+  aiResults = {};
+  document.getElementById('parsedSection').style.display = 'none';
+  document.getElementById('aiSection').style.display = 'none';
+};
+
+// ─── SAVE DIRECT ORDERS ──────────────────────────────────
+window.saveDirectOrders = async function() {
+  if(!parsedOrders.length){ showToast('Tiada order untuk simpan!','red'); return; }
+  var batch = {};
+  parsedOrders.forEach(function(o) {
+    var key = push(ref(db,'direct_orders')).key;
+    batch['direct_orders/'+key] = {
+      orderId: o.orderId, name: o.name, phone: o.phone,
+      address: o.address, postcode: o.postcode,
+      itemCode: o.itemCode, remark: o.remark,
+      status: 'pending', trackingNo: '',
+      createdAt: Date.now(), createdBy: currentUser.email
+    };
+  });
+  await update(ref(db,'/'), batch);
+  showToast('✅ '+parsedOrders.length+' order disimpan!','green');
+  parsedOrders = [];
+  aiResults = {};
+  document.getElementById('parsedSection').style.display = 'none';
+  document.getElementById('aiSection').style.display = 'none';
+  document.getElementById('pasteArea').value = '';
+};
+
+// ─── EXPORT CSV ──────────────────────────────────────────
+window.exportDirectCSV = function() {
+  if(!parsedOrders.length){ showToast('Tiada order!','red'); return; }
+  var csv = 'Recipient Name,Recipient Phone,Detail Address,Postal Code,Customer Reference No.\n';
+  parsedOrders.forEach(function(o){
+    csv += '"'+o.name+'","'+o.phone+'","'+o.address+'","'+o.postcode+'","'+o.orderId+' '+o.itemCode+'"\n';
+  });
+  downloadCSV(csv, 'direct-orders-'+new Date().toISOString().slice(0,10)+'.csv');
+};
+
+window.exportAllDirectCSV = function() {
+  var orders = Object.values(directOrders).filter(function(o){ return o.status!=='delivered'; });
+  if(!orders.length){ showToast('Tiada order!','red'); return; }
+  var csv = 'Recipient Name,Recipient Phone,Detail Address,Postal Code,Customer Reference No.\n';
+  orders.forEach(function(o){
+    csv += '"'+o.name+'","'+o.phone+'","'+o.address+'","'+o.postcode+'","'+o.orderId+' '+o.itemCode+'"\n';
+  });
+  downloadCSV(csv, 'direct-orders-all-'+new Date().toISOString().slice(0,10)+'.csv');
+};
+
+window.exportSubliveCSV = function() {
+  var orders = Object.values(subliveOrders).filter(function(o){ return o.status!=='delivered'; });
+  if(!orders.length){ showToast('Tiada order sublive!','red'); return; }
+  var csv = 'Recipient Name,Recipient Phone,Detail Address,Postal Code,Customer Reference No.\n';
+  orders.forEach(function(o){
+    var items = (o.items||[]).map(function(i){return (i.qty||1)+'x '+i.code+' EU'+i.size;}).join(', ');
+    csv += '"'+(o.customer&&o.customer.name||'')+'","'+(o.customer&&o.customer.phone||'')+'","'+(o.customer&&o.customer.address||'')+'","","'+(o.orderId||'SL-'+Date.now())+' '+items+'"\n';
+  });
+  downloadCSV(csv, 'sublive-orders-'+new Date().toISOString().slice(0,10)+'.csv');
+};
+
+function downloadCSV(csv, filename) {
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ CSV downloaded!','green');
+}
+
+// ─── TRACKING ────────────────────────────────────────────
+window.processTracking = async function() {
+  var raw = document.getElementById('trackingPaste').value.trim();
+  if(!raw){ showToast('Paste tracking data dulu!','red'); return; }
+
+  var lines = raw.split('\n').filter(function(l){return l.trim();});
+  var updates = {}, count = 0;
+
+  for(var i=0; i<lines.length; i++) {
+    var parts = lines[i].split('\t');
+    if(parts.length < 2) continue;
+    var orderId = parts[0].trim();
+    var trackingNo = parts[1].trim();
+    if(!orderId || !trackingNo) continue;
+
+    // Find in direct orders
+    var found = false;
+    Object.entries(directOrders).forEach(function(e){
+      if(e[1].orderId === orderId) {
+        updates['direct_orders/'+e[0]+'/trackingNo'] = trackingNo;
+        updates['direct_orders/'+e[0]+'/status'] = 'shipped';
+        found = true; count++;
+      }
+    });
+    // Find in sublive orders
+    if(!found) {
+      Object.entries(subliveOrders).forEach(function(e){
+        if(e[1].orderId === orderId) {
+          updates['sublive_orders/'+e[0]+'/trackingNo'] = trackingNo;
+          updates['sublive_orders/'+e[0]+'/status'] = 'shipped';
+          count++;
+        }
+      });
+    }
+  }
+
+  if(!count){ showToast('Tiada Order ID yang match!','red'); return; }
+  await update(ref(db,'/'), updates);
+  document.getElementById('trackingPaste').value = '';
+  showToast('✅ '+count+' tracking dikemaskini!','green');
+};
+
+window.renderTrackingOrders = function() {
+  var q = (document.getElementById('trackingSearch')?.value||'').toLowerCase();
+  var allOrders = [];
+
+  Object.values(directOrders).forEach(function(o){
+    allOrders.push({orderId:o.orderId,name:o.name,phone:o.phone,item:o.itemCode,tracking:o.trackingNo,trackingLink:o.trackingLink,status:o.status,createdAt:o.createdAt||0});
+  });
+  Object.values(subliveOrders).forEach(function(o){
+    var items=(o.items||[]).map(function(i){return i.code+' EU'+i.size;}).join(', ');
+    allOrders.push({orderId:o.orderId||'—',name:o.customer&&o.customer.name,phone:o.customer&&o.customer.phone,item:items,tracking:o.trackingNo,trackingLink:o.trackingLink,status:o.status,createdAt:o.createdAt||0});
+  });
+
+  if(q) allOrders = allOrders.filter(function(o){ return (o.orderId||'').toLowerCase().includes(q)||(o.tracking||'').toLowerCase().includes(q)||(o.name||'').toLowerCase().includes(q); });
+  allOrders.sort(function(a,b){ return b.createdAt-a.createdAt; });
+
+  var tbody = document.getElementById('trackingTable');
+  if(!allOrders.length){ tbody.innerHTML='<tr><td colspan="7"><div class="empty-state">Tiada order.</div></td></tr>'; return; }
+
+  tbody.innerHTML = allOrders.map(function(o){
+    var trackingCell = o.tracking ? '<span class="td-mono" style="color:var(--green)">'+o.tracking+'</span>' : '<span style="color:var(--muted)">Belum ada</span>';
+    var linkCell = o.trackingLink ? '<a href="'+o.trackingLink+'" target="_blank" style="color:var(--blue);font-size:12px;text-decoration:none">🔗 Track</a>' : '—';
+    return '<tr>'+
+      '<td class="td-id">'+(o.orderId||'—')+'</td>'+
+      '<td>'+(o.name||'—')+'</td>'+
+      '<td class="td-mono">'+(o.phone||'—')+'</td>'+
+      '<td style="font-size:11px">'+(o.item||'—')+'</td>'+
+      '<td>'+trackingCell+'</td>'+
+      '<td>'+linkCell+'</td>'+
+      '<td>'+getStatusBadge(o.status||'pending')+'</td>'+
+      '</tr>';
+  }).join('');
+};
+
+// ─── IMPORT SPX EXCEL ────────────────────────────────────
+var importedTrackingData = [];
+
+window.importSPXExcel = function() {
+  var file = document.getElementById('spxExcelFile').files[0];
+  if(!file){ return; }
+  document.getElementById('importStatus').textContent = '⏳ Memproses fail...';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var workbook = XLSX.read(data, {type:'array'});
+      var sheet = workbook.Sheets[workbook.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(sheet, {header:1});
+
+      // Find header row
+      var headerRow = -1;
+      var headers = {};
+      for(var i=0; i<Math.min(5,rows.length); i++) {
+        if(rows[i] && rows[i].indexOf('Tracking No.')>=0) {
+          headerRow = i;
+          rows[i].forEach(function(h,idx){ headers[h]=idx; });
+          break;
+        }
+      }
+      if(headerRow<0){ showToast('Format Excel tidak dikenali. Pastikan fail dari SPX.','red'); return; }
+
+      importedTrackingData = [];
+      for(var r=headerRow+1; r<rows.length; r++) {
+        var row = rows[r];
+        if(!row || !row[headers['Tracking No.']]) continue;
+        var trackingNo = String(row[headers['Tracking No.']]||'').trim();
+        var trackingLink = String(row[headers['Tracking No. link']]||'https://spx.com.my/track?'+trackingNo).trim();
+        var phone = String(row[headers['Recipient Phone Number']]||'').trim();
+        var postcode = String(row[headers['Recipient Postal Code']]||'').trim();
+        var name = String(row[headers['Recipient Name']]||'').trim();
+        var spxStatus = String(row[headers['Tracking Status']]||'').trim();
+        var custRef = String(row[headers['Customer Reference No.']]||'').trim();
+        if(!trackingNo) continue;
+        importedTrackingData.push({ trackingNo, trackingLink, phone, postcode, name, spxStatus, custRef });
+      }
+
+      renderImportPreview();
+      document.getElementById('importStatus').textContent = importedTrackingData.length+' tracking dijumpai';
+      document.getElementById('importPreview').style.display = 'block';
+    } catch(err) {
+      showToast('Error baca Excel: '+err.message,'red');
+      document.getElementById('importStatus').textContent = 'Error!';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+function renderImportPreview() {
+  // Try to match with orders using phone last 4 + postcode
+  var allOrders = [];
+  Object.entries(directOrders).forEach(function(e){ allOrders.push({key:e[0],type:'direct',data:e[1]}); });
+  Object.entries(subliveOrders).forEach(function(e){ allOrders.push({key:e[0],type:'sublive',data:e[1]}); });
+
+  document.getElementById('importCount').textContent = importedTrackingData.length;
+  document.getElementById('importPreviewTable').innerHTML = importedTrackingData.map(function(t,i) {
+    // Try match by phone last 4 + postcode
+    var last4 = t.phone.slice(-4);
+    var matchedOrder = null;
+    allOrders.forEach(function(o) {
+      var oPhone = (o.type==='direct'?o.data.phone:o.data.customer&&o.data.customer.phone)||'';
+      var oPost = (o.type==='direct'?o.data.postcode:o.data.customer&&o.data.customer.address)||'';
+      if(oPhone.slice(-4)===last4) matchedOrder = o;
+    });
+
+    var matchBadge = matchedOrder
+      ? '<span style="color:var(--green);font-size:11px">✅ '+(matchedOrder.data.orderId||matchedOrder.type)+'</span>'
+      : '<span style="color:var(--muted);font-size:11px">—</span>';
+
+    return '<tr>'+
+      '<td class="td-mono">'+t.trackingNo+'</td>'+
+      '<td>'+t.name+'</td>'+
+      '<td class="td-mono">'+t.phone+'</td>'+
+      '<td class="td-mono">'+t.postcode+'</td>'+
+      '<td><span class="badge '+(t.spxStatus==='Delivered'?'badge-delivered':'badge-confirmed')+'">'+t.spxStatus+'</span></td>'+
+      '<td>'+matchBadge+'</td>'+
+      '</tr>';
+  }).join('');
+}
+
+window.saveImportedTracking = async function() {
+  if(!importedTrackingData.length){ showToast('Tiada data!','red'); return; }
+
+  // Build tracking lookup in Firebase
+  var updates = {};
+  var count = 0;
+
+  // Save all tracking data indexed by phone last4 + postcode
+  importedTrackingData.forEach(function(t) {
+    var last4 = t.phone.slice(-4);
+    var key = last4 + '_' + t.postcode.replace(/\s/g,'');
+    updates['tracking/'+key] = {
+      trackingNo: t.trackingNo,
+      trackingLink: t.trackingLink,
+      name: t.name,
+      phone: t.phone,
+      postcode: t.postcode,
+      spxStatus: t.spxStatus,
+      updatedAt: Date.now()
+    };
+    count++;
+
+    // Also match & update direct/sublive orders
+    Object.entries(directOrders).forEach(function(e) {
+      if(e[1].phone && e[1].phone.slice(-4)===last4) {
+        updates['direct_orders/'+e[0]+'/trackingNo'] = t.trackingNo;
+        updates['direct_orders/'+e[0]+'/trackingLink'] = t.trackingLink;
+        updates['direct_orders/'+e[0]+'/status'] = t.spxStatus==='Delivered'?'delivered':'shipped';
+      }
+    });
+    Object.entries(subliveOrders).forEach(function(e) {
+      var phone = e[1].customer&&e[1].customer.phone||'';
+      if(phone.slice(-4)===last4) {
+        updates['sublive_orders/'+e[0]+'/trackingNo'] = t.trackingNo;
+        updates['sublive_orders/'+e[0]+'/trackingLink'] = t.trackingLink;
+        updates['sublive_orders/'+e[0]+'/status'] = t.spxStatus==='Delivered'?'delivered':'shipped';
+      }
+    });
+  });
+
+  await update(ref(db,'/'), updates);
+  document.getElementById('importPreview').style.display = 'none';
+  importedTrackingData = [];
+  document.getElementById('spxExcelFile').value = '';
+  document.getElementById('importStatus').textContent = 'Belum ada fail dipilih';
+  showToast('✅ '+count+' tracking disimpan!','green');
+};
+
+window.cancelImport = function() {
+  importedTrackingData = [];
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('spxExcelFile').value = '';
+  document.getElementById('importStatus').textContent = 'Belum ada fail dipilih';
+};
+
+// ─── RENDER TRACKING ─────────────────────────────────────
+window.renderDirectOrders = function() {
+  var status = document.getElementById('directStatusFilter').value;
+  var q = document.getElementById('directSearch').value.toLowerCase();
+  var entries = Object.values(directOrders).filter(function(o){
+    if(status && o.status!==status) return false;
+    if(q && !(o.name||'').toLowerCase().includes(q) && !(o.orderId||'').toLowerCase().includes(q)) return false;
+    return true;
+  }).sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0);});
+
+  var tbody = document.getElementById('directTable');
+  if(!entries.length){ tbody.innerHTML='<tr><td colspan="7"><div class="empty-state">Tiada order.</div></td></tr>'; return; }
+  tbody.innerHTML = entries.map(function(o){
+    return '<tr>'+
+      '<td class="td-id">'+(o.orderId||'—')+'</td>'+
+      '<td class="td-muted">'+new Date(o.createdAt||0).toLocaleDateString('ms-MY')+'</td>'+
+      '<td><div style="font-weight:600">'+o.name+'</div><div class="td-muted">'+o.phone+'</div></td>'+
+      '<td class="td-mono">'+(o.itemCode||'—')+'</td>'+
+      '<td class="td-mono" style="color:var(--green)">'+(o.trackingNo||'<span style="color:var(--muted)">—</span>')+'</td>'+
+      '<td>'+getStatusBadge(o.status||'pending')+'</td>'+
+      '</tr>';
+  }).join('');
+};
+
+function updateSubliveFilters() {
+  var hosts = new Set();
+  Object.values(subliveOrders).forEach(function(o){ if(o.subliveHost) hosts.add(o.subliveHost); });
+  var sel = document.getElementById('subliveHostFilter'), cur = sel.value;
+  sel.innerHTML = '<option value="">Semua Host</option>';
+  Array.from(hosts).sort().forEach(function(h){ sel.innerHTML += '<option value="'+h+'"'+(cur===h?' selected':'')+'>'+h+'</option>'; });
+}
+
+window.renderSubliveOrders = function() {
+  var host = document.getElementById('subliveHostFilter').value;
+  var status = document.getElementById('subliveStatusFilter').value;
+  var q = document.getElementById('subliveSearch').value.toLowerCase();
+  var entries = Object.values(subliveOrders).filter(function(o){
+    if(host && o.subliveHost!==host) return false;
+    if(status && o.status!==status) return false;
+    if(q && !(o.customer&&o.customer.name||'').toLowerCase().includes(q) && !(o.orderId||'').toLowerCase().includes(q)) return false;
+    return true;
+  }).sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0);});
+
+  var tbody = document.getElementById('subliveTable');
+  if(!entries.length){ tbody.innerHTML='<tr><td colspan="8"><div class="empty-state">Tiada order.</div></td></tr>'; return; }
+  tbody.innerHTML = entries.map(function(o){
+    var items=(o.items||[]).map(function(i){return (i.qty||1)+'x '+( i.code||'')+' EU'+(i.size||'');}).join(', ');
+    return '<tr>'+
+      '<td class="td-id">'+(o.orderId||'SL-???')+'</td>'+
+      '<td class="td-muted">'+new Date(o.createdAt||0).toLocaleDateString('ms-MY')+'</td>'+
+      '<td><div style="font-weight:600">'+(o.customer&&o.customer.name||'—')+'</div><div class="td-muted">'+(o.customer&&o.customer.phone||'')+'</div></td>'+
+      '<td style="font-size:11px">'+items+'</td>'+
+      '<td class="td-amount">RM'+(o.total||0).toFixed(2)+'</td>'+
+      '<td class="td-muted" style="font-size:11px">'+(o.subliveHost||'—')+'</td>'+
+      '<td class="td-mono" style="color:var(--green)">'+(o.trackingNo||'<span style="color:var(--muted)">—</span>')+'</td>'+
+      '<td>'+getStatusBadge(o.status||'confirmed')+'</td>'+
+      '</tr>';
+  }).join('');
+};
+
+function updateBorongFilters() {
+  var refs = new Set();
+  Object.values(borongOrders).forEach(function(o){ if(o.referralCode) refs.add(o.referralCode); });
+  var sel = document.getElementById('borongRefFilter'), cur = sel.value;
+  sel.innerHTML = '<option value="">Semua Referral</option>';
+  Array.from(refs).sort().forEach(function(r){ sel.innerHTML += '<option value="'+r+'"'+(cur===r?' selected':'')+'>'+r+'</option>'; });
+}
+
+window.renderBorongOrders = function() {
+  var status = document.getElementById('borongStatusFilter').value;
+  var ref = document.getElementById('borongRefFilter').value;
+  var q = document.getElementById('borongSearch').value.toLowerCase();
+  var entries = Object.values(borongOrders).filter(function(o){
+    if(status && o.status!==status) return false;
+    if(ref && o.referralCode!==ref) return false;
+    if(q && !(o.customer&&o.customer.name||'').toLowerCase().includes(q)) return false;
+    return true;
+  }).sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0);});
+
+  var tbody = document.getElementById('borongTable');
+  if(!entries.length){ tbody.innerHTML='<tr><td colspan="8"><div class="empty-state">Tiada order.</div></td></tr>'; return; }
+  tbody.innerHTML = entries.map(function(o,i){
+    var items=(o.items||[]).map(function(it){return it.qty+'x '+it.code+' EU'+it.size;}).join(', ');
+    return '<tr>'+
+      '<td class="td-muted">'+new Date(o.createdAt||0).toLocaleDateString('ms-MY')+'</td>'+
+      '<td><div style="font-weight:600">'+(o.customer&&o.customer.name||'—')+'</div><div class="td-muted">'+(o.customer&&o.customer.phone||'')+'</div></td>'+
+      '<td style="font-size:11px">'+items+'<div class="td-muted">'+o.totalQty+' pcs • Tier '+o.tier+'</div></td>'+
+      '<td class="td-amount">RM'+(o.total||0).toFixed(2)+'</td>'+
+      '<td class="td-mono" style="color:var(--yellow)">RM'+(o.deposit||0).toFixed(2)+'</td>'+
+      '<td class="td-ref">'+(o.referralCode||'DIRECT')+'</td>'+
+      '<td style="font-size:11px;max-width:150px">'+(o.customer&&o.customer.address||'—')+'</td>'+
+      '<td>'+getStatusBadge(o.status)+'</td>'+
+      '</tr>';
+  }).join('');
+};
+
+// ─── REFERRAL ────────────────────────────────────────────
+window.renderReferral = function() {
+  var refs = {};
+  Object.values(borongOrders).forEach(function(o){
+    var code=o.referralCode||'DIRECT';
+    if(!refs[code]) refs[code]={total:0,confirmed:0,amount:0};
+    refs[code].total++;
+    if(o.status==='confirmed'||o.status==='shipped'){refs[code].confirmed++;refs[code].amount+=(o.total||0);}
+  });
+  var entries = Object.entries(refs).sort(function(a,b){return b[1].confirmed-a[1].confirmed;});
+  if(!entries.length){ document.getElementById('referralList').innerHTML='<div class="empty-state">Belum ada data referral.</div>'; return; }
+  document.getElementById('referralList').innerHTML = entries.map(function(e){
+    var code=e[0], d=e[1], komisyen=d.confirmed*KOMISYEN;
+    return '<div class="ref-card">'+
+      '<div class="ref-code">'+code+'</div>'+
+      '<div class="ref-stats">'+
+      '<div class="ref-stat"><div class="ref-stat-val" style="color:var(--blue)">'+d.total+'</div><div class="ref-stat-lbl">Total Order</div></div>'+
+      '<div class="ref-stat"><div class="ref-stat-val" style="color:var(--green)">'+d.confirmed+'</div><div class="ref-stat-lbl">Confirmed</div></div>'+
+      '<div class="ref-stat"><div class="ref-stat-val" style="color:var(--green)">RM'+d.amount.toFixed(0)+'</div><div class="ref-stat-lbl">Nilai Jualan</div></div>'+
+      '</div>'+
+      '<div style="text-align:right">'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">Komisyen</div>'+
+      '<div class="ref-komisyen">RM'+komisyen+'</div>'+
+      '<div style="font-size:11px;color:var(--muted)">'+d.confirmed+' × RM'+KOMISYEN+'</div>'+
+      '</div></div>';
+  }).join('');
+};
+
+// ─── UTILS ───────────────────────────────────────────────
+function getStatusBadge(s) {
+  var map={pending:'badge-pending',pending_deposit:'badge-pending',confirmed:'badge-confirmed',shipped:'badge-shipped',delivered:'badge-delivered',cancelled:'badge-cancelled'};
+  var lbl={pending:'Pending',pending_deposit:'Pending Deposit',confirmed:'Confirmed',shipped:'Shipped',delivered:'Delivered',cancelled:'Cancelled'};
+  return '<span class="badge '+(map[s]||'badge-pending')+'">'+(lbl[s]||s)+'</span>';
+}
+
+window.showToast = function(msg, type) {
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(type||'')+' show';
+  setTimeout(function(){t.classList.remove('show');},3000);
+};
+
+// Also update sublive order ID when saving
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-generate order IDs for sublive orders that don't have one
+});
+</script>
+</body>
+</html>
