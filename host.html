@@ -505,9 +505,10 @@ onAuthStateChanged(auth, async function(user) {
       document.getElementById('usersTab').style.display = 'block';
       document.getElementById('btnAddProduct').style.display = 'block';
     }
-    // Admin Bos — boleh add product, TAPI tiada Users tab & tiada sublive access
+    // Admin Bos — boleh add product, add host & borong user, tengok borong orders
     if (isAdminBos) {
       document.getElementById('btnAddProduct').style.display = 'block';
+      document.getElementById('usersTab').style.display = 'block';
     }
     buildSizesEditor();
     buildSizeFilterChips();
@@ -849,6 +850,16 @@ window.openAddUserModal = function() {
   document.getElementById('uRole').value='host';
   document.getElementById('borongFields').style.display='none';
   document.getElementById('subliveFields').style.display='none';
+
+  // Hide sublive & admin options for admin_bos
+  var roleSelect = document.getElementById('uRole');
+  var subliveOption = roleSelect.querySelector('option[value="sublive"]');
+  var adminOption = roleSelect.querySelector('option[value="admin"]');
+  var adminBosOption = roleSelect.querySelector('option[value="admin_bos"]');
+  if(subliveOption) subliveOption.style.display = isAdmin ? '' : 'none';
+  if(adminOption) adminOption.style.display = isAdmin ? '' : 'none';
+  if(adminBosOption) adminBosOption.style.display = isAdmin ? '' : 'none';
+
   document.getElementById('userModal').classList.add('open');
 };
 
