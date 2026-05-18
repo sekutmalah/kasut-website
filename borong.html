@@ -372,7 +372,7 @@ onAuthStateChanged(auth, async function(user) {
   if (user) {
     var snap = await get(ref(db, 'users/'+user.uid));
     var ud = snap.val();
-    if (!ud || (ud.role !== 'borong' && ud.role !== 'admin')) {
+    if (!ud || (ud.role !== 'borong' && ud.role !== 'admin' && ud.role !== 'admin_bos')) {
       showToast('Akaun ini tidak mempunyai akses borong.', 'red');
       signOut(auth); return;
     }
