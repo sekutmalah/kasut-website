@@ -465,6 +465,7 @@ const db = getDatabase(app);
 let products = {};
 let currentUser = null;
 let isAdmin = false;
+let currentRole = '';
 let selectedSize = '';
 
 // ─── AUTH ────────────────────────────────────────────────
@@ -493,6 +494,7 @@ onAuthStateChanged(auth, async function(user) {
 
     isAdmin = role === 'admin';
     var isAdminBos = role === 'admin_bos';
+    currentRole = role;
     var roleLabel = isAdmin ? ' [ADMIN]' : isAdminBos ? ' [ADMIN BOS]' : ' [HOST]';
     document.getElementById('userBadge').textContent = user.email + roleLabel;
     document.getElementById('loginScreen').style.display = 'none';
@@ -701,7 +703,7 @@ window.renderProducts = function() {
     if (p.priceBorong50) prices += '<span class="price-tag price-borong50">50pcs: RM '+p.priceBorong50+'</span>';
     if (p.priceBorong100) prices += '<span class="price-tag price-borong100">100pcs: RM '+p.priceBorong100+'</span>';
 
-    var footer = isAdmin ?
+    var footer = (isAdmin || currentRole === 'admin_bos') ?
       '<div class="card-footer">'+
       '<button class="btn-edit" onclick="openEditModal(\''+k+'\')">✏️ Edit</button>'+
       '<button class="btn-del" onclick="deleteProduct(\''+k+'\')">🗑</button>'+
