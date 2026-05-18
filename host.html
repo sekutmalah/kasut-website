@@ -836,6 +836,14 @@ async function loadUsers() {
   var snap = await get(ref(db,'users'));
   var data = snap.val()||{};
   var entries = Object.entries(data);
+
+  // Admin bos — only show host & borong users
+  if(!isAdmin) {
+    entries = entries.filter(function(e){
+      return e[1].role === 'host' || e[1].role === 'borong';
+    });
+  }
+
   var list = document.getElementById('usersList');
   if (!entries.length) { list.innerHTML='<p style="color:var(--muted);font-size:14px">Belum ada user.</p>'; return; }
   list.innerHTML = entries.map(function(e){
