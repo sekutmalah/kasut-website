@@ -463,13 +463,32 @@ onAuthStateChanged(auth, async function(user) {
   if (user) {
     var snap = await get(ref(db, 'users/'+user.uid));
     var ud = snap.val();
-    if (!ud || ud.role !== 'admin') {
+    if (!ud || (ud.role !== 'admin' && ud.role !== 'admin_bos')) {
       document.getElementById('loginErr').style.display = 'block';
-      document.getElementById('loginErr').textContent = 'Tiada akses dashboard. Admin sahaja.';
+      document.getElementById('loginErr').textContent = 'Tiada akses dashboard.';
       signOut(auth); return;
     }
     currentUser = user;
-    document.getElementById('userBadge').textContent = user.email+' [ADMIN]';
+    var isAdminBos = ud.role === 'admin_bos';
+    document.getElementById('userBadge').textContent = user.email+(ud.role==='admin'?' [ADMIN]':' [ADMIN BOS]');
+
+    // Hide tabs for admin_bos
+    if(isAdminBos) {
+      document.querySelectorAll('.nav-tab').forEach(function(t){ t.style.display='none'; });
+      // Only show borong, tracking, referral
+      var tabs = document.querySelectorAll('.nav-tab');
+      tabs.forEach(function(t){
+        var onclick = t.getAttribute('onclick')||'';
+        if(onclick.includes('borong')||onclick.includes('tracking')||onclick.includes('referral')) {
+          t.style.display='block';
+        }
+      });
+      // Switch to borong tab by default
+      setTimeout(function(){
+        var borongTab = document.querySelector('.nav-tab[onclick*="borong"]');
+        if(borongTab) borongTab.click();
+      }, 500);
+    }
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
 
