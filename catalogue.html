@@ -217,6 +217,18 @@
   <div class="hero-contact">📞 CONTACT SELLER FOR ORDER</div>
 </div>
 
+<!-- TRACKING BAR COMPACT -->
+<div style="background:#000;border-bottom:1px solid #2d2d2d;padding:10px 24px">
+  <div style="max-width:600px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:2px;white-space:nowrap">📦 TRACK ORDER</span>
+    <input type="text" id="trackPhone" maxlength="4" placeholder="4567" style="width:64px;padding:7px 10px;background:#1a1a1a;border:1px solid #333;color:#fff;font-family:monospace;font-size:13px;text-align:center;outline:none;letter-spacing:2px">
+    <span style="color:#555">—</span>
+    <input type="text" id="trackPostcode" maxlength="5" placeholder="40000" style="width:78px;padding:7px 10px;background:#1a1a1a;border:1px solid #333;color:#fff;font-family:monospace;font-size:13px;text-align:center;outline:none;letter-spacing:2px">
+    <button onclick="checkTracking()" style="padding:7px 16px;background:var(--accent);color:#000;border:none;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;cursor:pointer">TRACK</button>
+    <div id="trackingResult" style="flex:1;min-width:200px"></div>
+  </div>
+</div>
+
 <!-- FILTER -->
 <div class="filter-wrap">
   <div class="filter-row1">
@@ -242,22 +254,6 @@
   </div>
   <div class="product-grid" id="productGrid">
     <div class="loading-screen"><div class="spinner"></div> LOADING CATALOGUE...</div>
-  </div>
-</div>
-
-<!-- TRACKING -->
-<div class="tracking-wrap">
-  <div class="tracking-inner">
-    <div class="tracking-eyebrow">// ORDER TRACKING //</div>
-    <div class="tracking-title">TRACK YOUR ORDER</div>
-    <div class="tracking-desc">ENTER LAST 4 DIGITS OF YOUR PHONE + POSTCODE</div>
-    <div class="tracking-inputs">
-      <input type="text" class="track-input" id="trackPhone" maxlength="4" placeholder="4567" style="width:80px">
-      <span class="track-sep">—</span>
-      <input type="text" class="track-input" id="trackPostcode" maxlength="5" placeholder="40000" style="width:95px">
-      <button class="btn-track" onclick="checkTracking()">TRACK</button>
-    </div>
-    <div class="tracking-result" id="trackingResult"></div>
   </div>
 </div>
 

@@ -467,6 +467,7 @@ let currentUser = null;
 let isAdmin = false;
 let currentRole = '';
 let selectedSize = '';
+let hostDeductions = {}; // Track what host deducted this session
 
 // ─── AUTH ────────────────────────────────────────────────
 window.doLogin = async function() {
@@ -690,12 +691,15 @@ window.renderProducts = function() {
       var qty = sizes[sz]||0;
       var cls = qty===0?'zero':qty<=2?'low':'ok';
       var isHighlighted = selectedSize===sz ? ' highlight' : '';
+      var deducted = (hostDeductions[k] && hostDeductions[k][sz]) || 0;
+      var canAdd = deducted > 0;
       sizeRows += '<div class="size-row'+isHighlighted+'">'+
         '<span class="size-label">EU '+sz+'</span>'+
         '<div class="size-controls">'+
         '<button class="btn-stock minus" onclick="adjustStock(\''+k+'\',\''+sz+'\',-1)"'+(qty<=0||isSoon?' disabled':'')+'>−</button>'+
         '<span class="stock-num '+cls+'">'+qty+'</span>'+
-        '<button class="btn-stock plus" onclick="adjustStock(\''+k+'\',\''+sz+'\',1)"'+(isSoon?' disabled':'')+'>＋</button>'+
+        '<button class="btn-stock plus" onclick="adjustStock(\''+k+'\',\''+sz+'\',1)"'+(!canAdd||isSoon?' disabled title="Tiada deduct untuk cancel"':'')+'>＋</button>'+
+        (deducted>0?'<span style="font-size:9px;color:var(--accent);font-family:monospace;margin-left:2px">-'+deducted+'</span>':'')+
         '</div></div>';
     }
 
@@ -731,11 +735,24 @@ window.renderProducts = function() {
 // ─── STOCK ADJUST ────────────────────────────────────────
 window.adjustStock = async function(pid, size, delta) {
   var cur = (products[pid]&&products[pid].sizes&&products[pid].sizes[size])||0;
+
+  if(delta > 0) {
+    // Only allow add back if previously deducted
+    var deducted = (hostDeductions[pid]&&hostDeductions[pid][size])||0;
+    if(deducted <= 0) { showToast('Tak boleh tambah — belum ada deduct untuk saiz ni!','red'); return; }
+    hostDeductions[pid][size] = deducted - 1;
+  } else {
+    // Track deduction
+    if(!hostDeductions[pid]) hostDeductions[pid] = {};
+    hostDeductions[pid][size] = ((hostDeductions[pid]&&hostDeductions[pid][size])||0) + 1;
+  }
+
   var nv = Math.max(0, cur+delta);
   var upd = {}; upd[size]=nv;
   await update(ref(db,'products/'+pid+'/sizes'), upd);
   push(ref(db,'activity'), {user:currentUser.email, product:products[pid]&&products[pid].name, size:size, delta:delta, newVal:nv, time:Date.now()});
-  showToast(delta>0?'＋1 ditambah — EU '+size:'−1 ditolak — EU '+size, delta>0?'green':'red');
+  renderProducts();
+  showToast(delta>0?'＋1 dikembalikan — EU '+size:'−1 ditolak — EU '+size, delta>0?'green':'red');
 };
 
 // ─── CODE ────────────────────────────────────────────────

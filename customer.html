@@ -222,6 +222,18 @@
   </div>
 </div>
 
+<!-- TRACKING BAR — COMPACT AT TOP -->
+<div style="background:#000;border-bottom:1px solid var(--border);padding:10px 28px">
+  <div style="max-width:600px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold-dim);letter-spacing:2px;white-space:nowrap">📦 CEK TRACKING</span>
+    <input type="text" id="trackPhone" maxlength="4" placeholder="4567" style="width:64px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:monospace;font-size:13px;text-align:center;outline:none;letter-spacing:2px">
+    <span style="color:var(--muted)">—</span>
+    <input type="text" id="trackPostcode" maxlength="5" placeholder="40000" style="width:78px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:monospace;font-size:13px;text-align:center;outline:none;letter-spacing:2px">
+    <button onclick="checkTracking()" style="padding:7px 16px;background:var(--gold);color:#000;border:none;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:1px">CEK</button>
+    <div id="trackingResult" style="flex:1;min-width:200px"></div>
+  </div>
+</div>
+
 <div class="filter-wrap">
   <div class="filter-row1">
     <input class="search-input" type="text" id="searchInput" placeholder="🔍  Cari nama atau kod kasut..." oninput="renderProducts()">
@@ -246,22 +258,6 @@
   </div>
   <div class="product-grid" id="productGrid">
     <div class="loading-screen"><div class="spinner"></div> MEMUATKAN...</div>
-  </div>
-</div>
-
-<div class="tracking-section">
-  <div class="tracking-inner">
-    <div class="tracking-eyebrow">// Order Tracking //</div>
-    <div class="tracking-title">Semak Penghantaran</div>
-    <div class="tracking-divider"></div>
-    <div class="tracking-desc">Masukkan 4 digit terakhir no. phone + poskod anda</div>
-    <div class="track-inputs">
-      <input type="text" class="track-input" id="trackPhone" maxlength="4" placeholder="4567" style="width:80px">
-      <span class="track-sep">—</span>
-      <input type="text" class="track-input" id="trackPostcode" maxlength="5" placeholder="40000" style="width:95px">
-      <button class="btn-track" onclick="checkTracking()">CEK</button>
-    </div>
-    <div id="trackingResult"></div>
   </div>
 </div>
 

@@ -554,11 +554,11 @@ window.renderProducts = function() {
     for(var s=0;s<sizeKeys.length;s++){
       var sz=sizeKeys[s], qty=sizes[sz]||0;
       var cartKey=k+'_'+sz, inCart=(cart[cartKey]&&cart[cartKey].qty)||0;
-      var availQty=qty-inCart;
+      // qty is already real-time from Firebase (already deducted) — don't subtract inCart
+      var availQty=qty;
       var btnCls, disabled='', stockLbl;
       if(isSoon){ if(qty<=0) continue; btnCls='soon-btn'; stockLbl='Soon'; }
-      else if(availQty<=0&&qty<=0){ btnCls='out'; disabled='disabled'; stockLbl='Habis'; }
-      else if(availQty<=0){ btnCls='out'; disabled='disabled'; stockLbl='Locked'; }
+      else if(availQty<=0){ btnCls='out'; disabled='disabled'; stockLbl='Habis'; }
       else if(availQty<=2){ btnCls='low avail'; stockLbl=availQty+' baki'; }
       else { btnCls='avail'; stockLbl=availQty+' unit'; }
       if(inCart>0) btnCls='in-cart';

@@ -270,6 +270,8 @@
         <select class="filter-select" id="filterBrand" onchange="onBrandChange()"><option value="">Semua Brand</option></select>
         <select class="filter-select" id="filterModel" onchange="onModelChange()" disabled><option value="">Semua Model</option></select>
         <select class="filter-select" id="filterColor" onchange="renderProducts()" disabled><option value="">Semua Warna</option></select>
+        <select class="filter-select" id="filterSize" onchange="renderProducts()"><option value="">Semua Saiz</option></select>
+        <button style="padding:8px 12px;background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;cursor:pointer" onclick="clearAllFilters()">✕ Reset</button>
       </div>
       <div class="product-list" id="productList">
         <div style="padding:40px;text-align:center;color:var(--muted)"><div class="spinner"></div></div>
@@ -292,9 +294,10 @@
 
         <!-- ADD CUSTOMER -->
         <div class="add-customer-section">
-          <div class="add-cust-label">+ Tambah Customer</div>
+          <div class="add-cust-label">+ Tambah Customer ke Cart</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Masukkan 4 digit phone atau username TikTok</div>
           <div class="add-cust-row">
-            <input class="add-cust-input" type="text" id="newCustName" placeholder="Nama customer...">
+            <input class="add-cust-input" type="text" id="newCustName" placeholder="cth: 4567 atau @user123">
             <button class="btn-add-cust" onclick="addCustomer()">Tambah</button>
           </div>
         </div>
@@ -429,6 +432,7 @@ onAuthStateChanged(auth, async function(user) {
     onValue(ref(db, 'products'), function(snap) {
       products = snap.val() || {};
       updateBrandFilter();
+      updateSizeFilter();
       renderProducts();
       updateCartUI();
     });
@@ -589,6 +593,29 @@ window.onModelChange = function() {
   cSel.disabled=false; renderProducts();
 };
 
+window.clearAllFilters = function() {
+  document.getElementById('searchInput').value='';
+  document.getElementById('filterBrand').value='';
+  document.getElementById('filterModel').innerHTML='<option value="">Semua Model</option>';
+  document.getElementById('filterModel').disabled=true;
+  document.getElementById('filterColor').innerHTML='<option value="">Semua Warna</option>';
+  document.getElementById('filterColor').disabled=true;
+  document.getElementById('filterSize').value='';
+  renderProducts();
+};
+
+function updateSizeFilter() {
+  var sizes = new Set();
+  Object.values(products).forEach(function(p){
+    Object.keys(p.sizes||{}).forEach(function(sz){ if((p.sizes[sz]||0)>0) sizes.add(sz); });
+  });
+  var sel = document.getElementById('filterSize'), cur = sel.value;
+  sel.innerHTML = '<option value="">Semua Saiz</option>';
+  Array.from(sizes).sort(function(a,b){return parseFloat(a)-parseFloat(b);}).forEach(function(sz){
+    sel.innerHTML += '<option value="'+sz+'"'+(cur===sz?' selected':'')+'>EU '+sz+'</option>';
+  });
+}
+
 // ─── RENDER PRODUCTS ─────────────────────────────────────
 window.renderProducts = function() {
   var list = document.getElementById('productList');
@@ -596,13 +623,20 @@ window.renderProducts = function() {
   var brand = document.getElementById('filterBrand').value;
   var model = document.getElementById('filterModel').value;
   var color = document.getElementById('filterColor').value;
+  var sizeFilter = document.getElementById('filterSize').value;
 
   var keys = Object.keys(products).filter(function(k){
     var p=products[k]; if(!p||!p.name) return false;
+    if(p.status==='coming_soon') return false; // Block coming soon
     if(brand&&p.brand!==brand) return false;
     if(model&&p.model!==model) return false;
     if(color&&p.color!==color) return false;
     if(q&&!(p.name||'').toLowerCase().includes(q)&&!(p.code||'').toLowerCase().includes(q)) return false;
+    // Size filter — bypass cascade, show any product with that size in stock
+    if(sizeFilter) {
+      var sizeQty = (p.sizes&&p.sizes[sizeFilter])||0;
+      if(sizeQty<=0) return false;
+    }
     return true;
   });
   keys.sort(function(a,b){ return (products[a].brand||'').localeCompare(products[b].brand||''); });
@@ -841,7 +875,7 @@ window.openSingleCheckout = function(custId) {
   var cust=cart.customers[custId];
   if(!cust||!Object.keys(cust.items||{}).length){ showToast('Tiada item!','red'); return; }
   document.getElementById('checkoutCustId').value=custId;
-  document.getElementById('coName').value=cust.name;
+  document.getElementById('coName').value='';
   document.getElementById('coPhone').value='';
   document.getElementById('coAddress').value='';
 
@@ -880,18 +914,20 @@ window.confirmSingleCheckout = async function() {
 
   await push(ref(db,'sublive_orders'),{
     orderId: orderId,
-    customer:{name:name,phone:phone,address:address},
+    customer:{name:name,phone:phone,address:address,notes:cust.name},
     items:items,total:total,subliveHost:currentUser.email,
     status:'confirmed', trackingNo:'', createdAt:Date.now()
   });
 
-  var msg='🛍️ *PESANAN KASUT*\n\n*Order ID: '+orderId+'*\nNama: '+name+'\nNo. WA: '+phone+'\nAlamat: '+address+'\n\n*Item:*\n'+itemLines.join('\n')+'\n\n*TOTAL: RM'+total.toFixed(2)+'*\n\nTerima kasih!';
+  // WA pergi ke admin Muqri
+  var ADMIN_WA = '601154444726';
+  var msg='🛍️ *ORDER SUB LIVE*\n\n*Order ID: '+orderId+'*\nHost: '+currentUser.email+'\nNotes: '+cust.name+'\n\nNama Customer: '+name+'\nNo. WA: '+phone+'\nAlamat: '+address+'\n\n*Item:*\n'+itemLines.join('\n')+'\n\n*TOTAL: RM'+total.toFixed(2)+'*';
   delete cart.customers[custId];
   if(selectedCustomerId===custId){ selectedCustomerId=null; updateSelectedBar(); }
   saveCartToStorage(); updateCartUI(); renderProducts();
   closeModal('checkoutModal');
-  window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msg),'_blank');
-  showToast('✅ Checkout berjaya! Order ID: '+orderId,'green');
+  window.open('https://wa.me/'+ADMIN_WA+'?text='+encodeURIComponent(msg),'_blank');
+  showToast('✅ Order '+orderId+' dihantar ke admin!','green');
 };
 
 function getWeekNum() {

@@ -280,7 +280,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Order ID</th><th>Tarikh</th><th>Nama</th><th>Phone</th><th>Item</th><th>Tracking</th><th>Status</th></tr></thead>
+          <thead><tr><th>Order ID</th><th>Tarikh</th><th>Nama</th><th>Phone</th><th>Item</th><th>Tracking</th><th>Status</th><th>Tindakan</th></tr></thead>
           <tbody id="directTable"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
         </table>
       </div>
@@ -417,7 +417,7 @@ const firebaseConfig = {
 };
 
 const CLAUDE_API_KEY = localStorage.getItem('claude_api_key') || '';
-const KOMISYEN = 100;
+const KOMISYEN_PERCENT = 0.02; // 2% dari jumlah jualan
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -998,24 +998,35 @@ window.cancelImport = function() {
 window.renderDirectOrders = function() {
   var status = document.getElementById('directStatusFilter').value;
   var q = document.getElementById('directSearch').value.toLowerCase();
-  var entries = Object.values(directOrders).filter(function(o){
+  var entries = Object.entries(directOrders).filter(function(e){
+    var o=e[1];
     if(status && o.status!==status) return false;
     if(q && !(o.name||'').toLowerCase().includes(q) && !(o.orderId||'').toLowerCase().includes(q)) return false;
     return true;
-  }).sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0);});
+  }).sort(function(a,b){return (b[1].createdAt||0)-(a[1].createdAt||0);});
 
   var tbody = document.getElementById('directTable');
-  if(!entries.length){ tbody.innerHTML='<tr><td colspan="7"><div class="empty-state">Tiada order.</div></td></tr>'; return; }
-  tbody.innerHTML = entries.map(function(o){
+  if(!entries.length){ tbody.innerHTML='<tr><td colspan="8"><div class="empty-state">Tiada order.</div></td></tr>'; return; }
+  tbody.innerHTML = entries.map(function(e){
+    var key=e[0], o=e[1];
     return '<tr>'+
       '<td class="td-id">'+(o.orderId||'—')+'</td>'+
       '<td class="td-muted">'+new Date(o.createdAt||0).toLocaleDateString('ms-MY')+'</td>'+
-      '<td><div style="font-weight:600">'+o.name+'</div><div class="td-muted">'+o.phone+'</div></td>'+
+      '<td><div style="font-weight:600">'+(o.name||'—')+'</div></td>'+
+      '<td class="td-mono">'+(o.phone||'—')+'</td>'+
       '<td class="td-mono">'+(o.itemCode||'—')+'</td>'+
       '<td class="td-mono" style="color:var(--green)">'+(o.trackingNo||'<span style="color:var(--muted)">—</span>')+'</td>'+
       '<td>'+getStatusBadge(o.status||'pending')+'</td>'+
+      '<td><button onclick="deleteDirectOrder(\''+key+'\')" style="background:none;border:1px solid var(--accent);color:var(--accent);padding:4px 10px;font-size:11px;cursor:pointer">🗑</button></td>'+
       '</tr>';
   }).join('');
+};
+
+window.deleteDirectOrder = async function(key) {
+  if(!confirm('Padam order ini?')) return;
+  var upd = {}; upd['direct_orders/'+key] = null;
+  await update(ref(db,'/'), upd);
+  showToast('✅ Order dipadam!','green');
 };
 
 function updateSubliveFilters() {
@@ -1063,31 +1074,67 @@ function updateBorongFilters() {
 }
 
 window.renderBorongOrders = function() {
-  var status = document.getElementById('borongStatusFilter').value;
-  var ref = document.getElementById('borongRefFilter').value;
+  var statusFilter = document.getElementById('borongStatusFilter').value;
+  var refFilter = document.getElementById('borongRefFilter').value;
   var q = document.getElementById('borongSearch').value.toLowerCase();
-  var entries = Object.values(borongOrders).filter(function(o){
-    if(status && o.status!==status) return false;
-    if(ref && o.referralCode!==ref) return false;
+  var entries = Object.entries(borongOrders).filter(function(e){
+    var o=e[1];
+    if(statusFilter && o.status!==statusFilter) return false;
+    if(refFilter && o.referralCode!==refFilter) return false;
     if(q && !(o.customer&&o.customer.name||'').toLowerCase().includes(q)) return false;
     return true;
-  }).sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0);});
+  }).sort(function(a,b){return (b[1].createdAt||0)-(a[1].createdAt||0);});
 
   var tbody = document.getElementById('borongTable');
   if(!entries.length){ tbody.innerHTML='<tr><td colspan="8"><div class="empty-state">Tiada order.</div></td></tr>'; return; }
-  tbody.innerHTML = entries.map(function(o,i){
+  tbody.innerHTML = entries.map(function(e){
+    var id=e[0], o=e[1];
     var items=(o.items||[]).map(function(it){return it.qty+'x '+it.code+' EU'+it.size;}).join(', ');
+    var statusBtns =
+      '<select class="filter-select" style="font-size:11px;padding:4px 8px" onchange="updateBorongStatus(\''+id+'\',this.value)">'+
+      '<option value="pending_deposit"'+(o.status==='pending_deposit'?' selected':'')+'>⏳ Pending Deposit</option>'+
+      '<option value="deposit_paid"'+(o.status==='deposit_paid'?' selected':'')+'>💳 Deposit Paid</option>'+
+      '<option value="coming_soon"'+(o.status==='coming_soon'?' selected':'')+'>🚢 Coming Soon</option>'+
+      '<option value="ready_to_post"'+(o.status==='ready_to_post'?' selected':'')+'>📦 Ready to Post</option>'+
+      '<option value="shipped"'+(o.status==='shipped'?' selected':'')+'>🚚 Shipped</option>'+
+      '<option value="delivered"'+(o.status==='delivered'?' selected':'')+'>✅ Delivered</option>'+
+      '<option value="cancelled"'+(o.status==='cancelled'?' selected':'')+'>❌ Cancelled</option>'+
+      '<option value="rejected"'+(o.status==='rejected'?' selected':'')+'>🚫 Rejected</option>'+
+      '</select>';
     return '<tr>'+
       '<td class="td-muted">'+new Date(o.createdAt||0).toLocaleDateString('ms-MY')+'</td>'+
       '<td><div style="font-weight:600">'+(o.customer&&o.customer.name||'—')+'</div><div class="td-muted">'+(o.customer&&o.customer.phone||'')+'</div></td>'+
       '<td style="font-size:11px">'+items+'<div class="td-muted">'+o.totalQty+' pcs • Tier '+o.tier+'</div></td>'+
-      '<td class="td-amount">RM'+(o.total||0).toFixed(2)+'</td>'+
-      '<td class="td-mono" style="color:var(--yellow)">RM'+(o.deposit||0).toFixed(2)+'</td>'+
+      '<td class="td-amount">RM'+(o.total||0).toFixed(2)+'<div class="td-muted">Deposit: RM'+(o.deposit||0).toFixed(2)+'</div></td>'+
       '<td class="td-ref">'+(o.referralCode||'DIRECT')+'</td>'+
-      '<td style="font-size:11px;max-width:150px">'+(o.customer&&o.customer.address||'—')+'</td>'+
+      '<td style="font-size:11px;max-width:130px">'+(o.customer&&o.customer.address||'—')+'</td>'+
       '<td>'+getStatusBadge(o.status)+'</td>'+
+      '<td>'+statusBtns+'</td>'+
       '</tr>';
   }).join('');
+};
+
+window.updateBorongStatus = async function(id, newStatus) {
+  var order = borongOrders[id];
+  if(!order) return;
+  var updates = {};
+  updates['orders/'+id+'/status'] = newStatus;
+  // Revert stock if cancelled or rejected
+  if(newStatus === 'cancelled' || newStatus === 'rejected') {
+    for(var i=0; i<(order.items||[]).length; i++) {
+      var item = order.items[i];
+      if(!item.isSoon && item.productId) {
+        var snap = await get(ref(db,'products/'+item.productId+'/sizes/'+item.size));
+        var cur = snap.val()||0;
+        updates['products/'+item.productId+'/sizes/'+item.size] = cur + item.qty;
+      }
+    }
+    await update(ref(db,'/'), updates);
+    showToast('✅ Status dikemaskini & stock dikembalikan!','green');
+  } else {
+    await update(ref(db,'/'), updates);
+    showToast('✅ Status dikemaskini!','green');
+  }
 };
 
 // ─── REFERRAL ────────────────────────────────────────────
@@ -1102,7 +1149,7 @@ window.renderReferral = function() {
   var entries = Object.entries(refs).sort(function(a,b){return b[1].confirmed-a[1].confirmed;});
   if(!entries.length){ document.getElementById('referralList').innerHTML='<div class="empty-state">Belum ada data referral.</div>'; return; }
   document.getElementById('referralList').innerHTML = entries.map(function(e){
-    var code=e[0], d=e[1], komisyen=d.confirmed*KOMISYEN;
+    var code=e[0], d=e[1], komisyen=(d.amount*KOMISYEN_PERCENT).toFixed(2);
     return '<div class="ref-card">'+
       '<div class="ref-code">'+code+'</div>'+
       '<div class="ref-stats">'+
@@ -1111,9 +1158,9 @@ window.renderReferral = function() {
       '<div class="ref-stat"><div class="ref-stat-val" style="color:var(--green)">RM'+d.amount.toFixed(0)+'</div><div class="ref-stat-lbl">Nilai Jualan</div></div>'+
       '</div>'+
       '<div style="text-align:right">'+
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">Komisyen</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">Komisyen (2%)</div>'+
       '<div class="ref-komisyen">RM'+komisyen+'</div>'+
-      '<div style="font-size:11px;color:var(--muted)">'+d.confirmed+' × RM'+KOMISYEN+'</div>'+
+      '<div style="font-size:11px;color:var(--muted)">2% × RM'+d.amount.toFixed(0)+'</div>'+
       '</div></div>';
   }).join('');
 };
