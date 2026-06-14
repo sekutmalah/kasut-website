@@ -64,6 +64,32 @@
   .size-chip.active { background: var(--blue); border-color: var(--blue); color: #fff; }
   .size-chip:hover:not(.active) { border-color: var(--blue); color: var(--blue); }
 
+  /* STATUS FILTER CHIPS */
+  .status-filter-wrap { display: flex; gap: 6px; flex-wrap: wrap; }
+  .status-chip { padding: 6px 12px; border: 1px solid var(--border); background: var(--bg); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+  .status-chip:hover:not(.active) { border-color: var(--text); color: var(--text); }
+  .status-chip.active.s-all { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .status-chip.active.s-instock { background: var(--green); color: #000; border-color: var(--green); }
+  .status-chip.active.s-low { background: #ff7043; color: #000; border-color: #ff7043; }
+  .status-chip.active.s-out { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .status-chip.active.s-soon { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  /* COMPACT SIZE PILLS (collapsed scan view) */
+  .card-pills { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 14px 12px; }
+  .size-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 34px; padding: 4px 5px; border: 1px solid var(--border); border-radius: 5px; font-family: 'DM Mono', monospace; line-height: 1.15; }
+  .size-pill .pz { font-size: 12px; font-weight: 700; }
+  .size-pill .pq { font-size: 11px; opacity: 0.85; }
+  .size-pill.ok { border-color: #00e67655; background: #00e67615; color: var(--green); }
+  .size-pill.low { border-color: #ff704366; background: #ff704318; color: #ff7043; }
+  .size-pill.zero { border-color: var(--border); background: transparent; color: #444; }
+  .size-pill.soon { border-color: #2979ff55; background: #2979ff15; color: var(--blue); }
+  .size-pill.hl { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+  /* ADJUST TOGGLE */
+  .card-toggle { padding: 0 14px 12px; }
+  .btn-toggle { width: 100%; padding: 9px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+  .btn-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
   .filter-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
   .btn-clear { padding: 8px 14px; background: none; border: 1px solid var(--border); color: var(--muted); font-size: 12px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .btn-clear:hover { border-color: var(--text); color: var(--text); }
@@ -247,6 +273,12 @@
             <button class="btn-clear" onclick="clearFilters()">✕ Reset</button>
             <button class="btn-add" id="btnAddProduct" onclick="openAddModal()" style="display:none">＋ Add</button>
           </div>
+        </div>
+
+        <!-- STATUS FILTER row -->
+        <div class="filter-row-2">
+          <div class="filter-label" style="margin:0;white-space:nowrap">Status:</div>
+          <div class="status-filter-wrap" id="statusFilterWrap"></div>
         </div>
 
         <!-- SIZE FILTER — bypass row -->
@@ -467,6 +499,8 @@ let currentUser = null;
 let isAdmin = false;
 let currentRole = '';
 let selectedSize = '';
+let selectedStatus = 'all'; // Status filter: all | instock | low | out | soon
+let expandedCards = {}; // Track which cards have ± controls expanded (survives re-render)
 let hostDeductions = {}; // Track what host deducted this session
 
 // ─── AUTH ────────────────────────────────────────────────
@@ -513,6 +547,7 @@ onAuthStateChanged(auth, async function(user) {
     }
     buildSizesEditor();
     buildSizeFilterChips();
+    buildStatusFilterChips();
     onValue(ref(db, 'products'), function(snap) {
       products = snap.val() || {};
       updateBrandFilter();
@@ -543,6 +578,34 @@ window.toggleSizeFilter = function(sz) {
     selectedSize = sz;
     document.getElementById('schip_'+sz).classList.add('active');
   }
+  renderProducts();
+};
+
+// ─── STATUS FILTER CHIPS ─────────────────────────────────
+function buildStatusFilterChips() {
+  var wrap = document.getElementById('statusFilterWrap');
+  if (!wrap) return;
+  var opts = [
+    {v:'all',     label:'Semua',          cls:'s-all'},
+    {v:'instock', label:'🟢 Ada Stok',     cls:'s-instock'},
+    {v:'low',     label:'🟠 Hampir Habis', cls:'s-low'},
+    {v:'out',     label:'🔴 Sold Out',     cls:'s-out'},
+    {v:'soon',    label:'🔵 Coming Soon',  cls:'s-soon'}
+  ];
+  wrap.innerHTML = opts.map(function(o){
+    return '<div class="status-chip '+o.cls+(selectedStatus===o.v?' active':'')+'" onclick="setStatusFilter(\''+o.v+'\')">'+o.label+'</div>';
+  }).join('');
+}
+
+window.setStatusFilter = function(v) {
+  selectedStatus = v;
+  buildStatusFilterChips();
+  renderProducts();
+};
+
+// ─── EXPAND/COLLAPSE ADJUST CONTROLS ─────────────────────
+window.toggleCardAdjust = function(pid) {
+  expandedCards[pid] = !expandedCards[pid];
   renderProducts();
 };
 
@@ -622,6 +685,8 @@ window.clearFilters = function() {
     document.getElementById('schip_'+selectedSize).classList.remove('active');
     selectedSize = '';
   }
+  selectedStatus = 'all';
+  buildStatusFilterChips();
   renderProducts();
 };
 
@@ -645,6 +710,15 @@ window.renderProducts = function() {
       var inBrand = (p.brand||'').toLowerCase().includes(q);
       var inModel = (p.model||'').toLowerCase().includes(q);
       if (!inCode && !inName && !inBrand && !inModel) return false;
+    }
+    // Status filter
+    if (selectedStatus && selectedStatus !== 'all') {
+      var tot = p.sizes ? Object.values(p.sizes).reduce(function(a,b){return a+(b||0);},0) : 0;
+      var soon = p.status === 'coming_soon';
+      if (selectedStatus === 'instock' && (soon || tot <= 0)) return false;
+      if (selectedStatus === 'low'     && (soon || !(tot > 0 && tot <= 5))) return false;
+      if (selectedStatus === 'out'     && (soon || tot !== 0)) return false;
+      if (selectedStatus === 'soon'    && !soon) return false;
     }
     // Size filter — bypass brand/model/color but filter by size availability
     if (selectedSize) {
@@ -685,6 +759,19 @@ window.renderProducts = function() {
     var imgHtml = imgUrl ? '<img class="card-img" src="'+imgUrl+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' : '';
     var fallback = '<div class="card-img-placeholder"'+(imgUrl?' style="display:none"':'')+'>👟</div>';
 
+    var isExpanded = !!expandedCards[k];
+
+    // Compact pills — always visible for fast at-a-glance scan during live
+    var pills = '';
+    for (var s=0; s<sizeKeys.length; s++) {
+      var psz = sizeKeys[s];
+      var pq = sizes[psz]||0;
+      var pcls = isSoon ? 'soon' : (pq===0?'zero':pq<=2?'low':'ok');
+      var phl = selectedSize===psz ? ' hl' : '';
+      pills += '<span class="size-pill '+pcls+phl+'"><span class="pz">'+psz+'</span><span class="pq">'+(isSoon?'·':pq)+'</span></span>';
+    }
+
+    // Expandable ± controls (hidden until host taps Adjust)
     var sizeRows = '';
     for (var s=0; s<sizeKeys.length; s++) {
       var sz = sizeKeys[s];
@@ -714,6 +801,11 @@ window.renderProducts = function() {
       '<button class="btn-del" onclick="deleteProduct(\''+k+'\')">🗑</button>'+
       '</div>' : '';
 
+    // Coming soon items can't be adjusted — no toggle
+    var toggleBtn = isSoon ? '' :
+      '<div class="card-toggle"><button class="btn-toggle" onclick="toggleCardAdjust(\''+k+'\')">'+
+      (isExpanded?'▲ Tutup':'＋ / − Adjust Stok')+'</button></div>';
+
     html += '<div class="product-card'+(isSoon?' coming-soon':isOut?' out-stock':isLow?' low-stock':'')+'">'+
       '<div class="card-header">'+imgHtml+fallback+
       '<div class="card-info">'+
@@ -726,7 +818,9 @@ window.renderProducts = function() {
       (!isSoon&&isOut?'<span class="badge badge-out">SOLD OUT</span>':'')+
       (!isSoon&&isLow?'<span class="badge badge-low">LOW STOCK</span>':'')+
       '</div></div></div>'+
-      '<div class="card-sizes"><div class="sizes-label">Saiz & Stok</div>'+sizeRows+'</div>'+
+      '<div class="card-pills">'+pills+'</div>'+
+      toggleBtn+
+      '<div class="card-sizes" style="'+(isExpanded?'':'display:none')+'"><div class="sizes-label">Saiz & Stok</div>'+sizeRows+'</div>'+
       footer+'</div>';
   }
   grid.innerHTML = html;
